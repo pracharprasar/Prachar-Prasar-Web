@@ -1,0 +1,68 @@
+import { Article } from '../types';
+
+export const ARTICLES_DATA: Article[] = [
+  {
+    id: 'prachar-nhi-toh-prasar-nhi-strategic-imperative',
+    slug: 'prachar-nhi-toh-prasar-nhi-strategic-imperative',
+    title: 'Prachar nhi toh Prasar nhi: Why Distribution Dictates Modern Brand Survival',
+    excerpt: 'Great products fail in silence without intentional promotion. Why advertising is not an optional expense, but the engine of enterprise expansion in India.',
+    category: 'Agency Philosophy',
+    publishedDate: 'March 2026',
+    readTime: '5 min read',
+    author: 'Pawan Rai, Founder & CEO',
+    content: [
+      'In today’s hyper-connected marketplace, the oldest business truth remains the most vital: if people do not know you exist, you cannot grow. This is the bedrock conviction behind Prachar Prasar: "Prachar nhi toh Prasar nhi!" (Without promotion, there is no expansion).',
+      'Far too many businesses treat marketing as an afterthought—an irregular expense to be activated only when sales slow down, or paused at the first sign of friction. In reality, modern distribution is not an episodic tactic; it is an active operating system.',
+      'When advertising is executed strategically, it accomplishes three core functions simultaneously: it anchors your brand authority, it systematically filters the market for high-intent buyers, and it equips your sales engine with warm, qualified conversations.',
+      'Whether through high-precision performance marketing, dominant outdoor billboards, or distinctive visual branding, the principle remains constant: consistent, dignified, and outcome-oriented promotion is the prerequisite for enduring business expansion.',
+    ],
+  },
+  {
+    id: 'real-estate-marketing-lead-funnels-vs-cold-calling',
+    slug: 'real-estate-marketing-lead-funnels-vs-cold-calling',
+    title: 'Real Estate Marketing in India: Moving Beyond Cold Lists to Intent Funnels',
+    excerpt: 'Why modern property buyers ignore unsolicited telecalling, and how structured digital marketing attracts pre-qualified investors and home seekers.',
+    category: 'Venture Insight: Realty Experts',
+    publishedDate: 'February 2026',
+    readTime: '6 min read',
+    author: 'Realty Experts Strategy Desk',
+    content: [
+      'For decades, Indian real estate developers and channel partners relied on bought phone databases and relentless cold-calling. In today’s market, spam-blocking technology, caller identification, and buyer fatigue have rendered raw telecalling increasingly ineffective.',
+      'Modern property buyers conduct weeks of private online research before ever speaking with an associate. When a developer provides clear project visual assets, verified floor plans, transparent price brackets, and location advantage videos upfront, buyer trust skyrockets.',
+      'Through Realty Experts ("Strategically Marketed, Scientifically Sold!"), we implement intent-driven digital architectures. Rather than collecting thousands of generic leads who hang up immediately, our funnels pre-qualify prospects through specific unit preferences, budget expectations, and visit-scheduling mechanisms.',
+      'The outcome is a streamlined sales cycle where associates spend their energy hosting serious site inspections for genuine purchasers rather than fighting rejection over the phone.',
+    ],
+  },
+  {
+    id: 'the-creative-and-performance-synergy',
+    slug: 'the-creative-and-performance-synergy',
+    title: 'Why Creative Branding and Performance Marketing Must Never Be Siloed',
+    excerpt: 'Data without compelling narrative is ignored; beautiful design without conversion architecture is expensive art. The case for integrated execution.',
+    category: 'Digital Strategy',
+    publishedDate: 'January 2026',
+    readTime: '4 min read',
+    author: 'Pawan Rai, Founder & CEO',
+    content: [
+      'The advertising industry has suffered from an artificial divide: creative agencies that look down on performance tracking, and media buyers who view ads merely as algorithmic spreadsheets with no regard for brand craftsmanship.',
+      'Both extremes fail the client. An ad with flawless technical bid optimization will still underperform if the creative hook is bland, confusing, or untrustworthy. Conversely, an award-winning brand film that lacks a clear call-to-action or targeted landing page produces nothing but vanity metrics.',
+      'At Prachar Prasar, we align both disciplines under one roof. Our performance media planners inform our creative directors of exact audience objections and drop-off points; our designers build modular visual assets that adapt dynamically across ad formats.',
+      'When strategic narrative meets analytical precision, advertising stops being an unpredictable cost center and becomes a predictable lever for commercial revenue.',
+    ],
+  },
+  {
+    id: 'spiritual-practitioners-digital-credibility',
+    slug: 'spiritual-practitioners-digital-credibility',
+    title: 'Where Spirituality Meets Strategy: Digital Ethics for Occult Professionals',
+    excerpt: 'How astrologers, healers, and Tarot consultants can build dignified, high-trust digital practices without resorting to sensationalism.',
+    category: 'Venture Insight: AstroExperts',
+    publishedDate: 'December 2025',
+    readTime: '5 min read',
+    author: 'AstroExperts Editorial',
+    content: [
+      'The ancient Vedic sciences, Tarot reading, and holistic healing traditions possess profound cultural depth. Yet in the digital sphere, spiritual consulting is frequently marred by sensationalist clickbait and unscientific promises.',
+      'Occult and spiritual professionals who seek long-term, high-value client relationships must invest in respectful, educational brand building. Serious clients seek guidance from practitioners who communicate with clarity, empathy, and professional integrity.',
+      'AstroExperts was founded specifically to bridge this divide under the banner: "Where Spirituality Meets Strategy!" We help Vedic astrologers, numerologists, and Vastu consultants establish dignified visual identities, educational video channels, and seamless calendar booking systems.',
+      'By treating spiritual practice with the institutional respect it deserves, practitioners attract clients who value their genuine expertise and willingly commit to dedicated consultation sessions.',
+    ],
+  },
+];
