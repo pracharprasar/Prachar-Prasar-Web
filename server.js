@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -18,7 +18,7 @@ const SITE_URL = process.env.SITE_URL || 'https://www.pracharprasar.co';
 // Security Headers with Helmet
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Let Vite client scripts & Google Fonts load without CSP blockage
+    contentSecurityPolicy: false, // Allows Vite client bundles and web fonts
     crossOriginEmbedderPolicy: false,
   })
 );
@@ -32,7 +32,7 @@ if (!fs.existsSync(dataDir)) {
   try {
     fs.mkdirSync(dataDir, { recursive: true });
   } catch (err) {
-    console.error('Failed to create data directory:', err);
+    console.error('Failed to create data directory:', err.message);
   }
 }
 const leadsFilePath = path.join(dataDir, 'leads.json');
@@ -40,16 +40,16 @@ if (!fs.existsSync(leadsFilePath)) {
   try {
     fs.writeFileSync(leadsFilePath, JSON.stringify([], null, 2), 'utf-8');
   } catch (err) {
-    console.error('Failed to initialize leads.json:', err);
+    console.error('Failed to initialize leads.json:', err.message);
   }
 }
 
 // In-memory rate limiting map for lead submissions
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const MAX_REQUESTS_PER_WINDOW = 12;
 
-const checkRateLimit = (ip: string): boolean => {
+const checkRateLimit = (ip) => {
   const now = Date.now();
   const record = rateLimitMap.get(ip);
   if (!record || now > record.resetTime) {
@@ -89,8 +89,23 @@ const CANONICAL_ROUTES = [
   { path: '/terms-and-conditions', priority: '0.3', changefreq: 'yearly' },
 ];
 
+// Health check endpoints (root /health and /api/health)
+const handleHealth = (_req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    app: 'Prachar Prasar Web Service',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    tagline: 'Prachar nhi toh Prasar nhi!',
+  });
+};
+
+app.get('/health', handleHealth);
+app.get('/api/health', handleHealth);
+
 // Serve dynamic robots.txt
-app.get('/robots.txt', (_req: Request, res: Response) => {
+app.get('/robots.txt', (_req, res) => {
   res.type('text/plain');
   res.send(`User-agent: *
 Allow: /
@@ -102,7 +117,7 @@ Sitemap: ${SITE_URL}/sitemap.xml
 });
 
 // Serve dynamic XML sitemap
-app.get('/sitemap.xml', (_req: Request, res: Response) => {
+app.get('/sitemap.xml', (_req, res) => {
   const today = new Date().toISOString().split('T')[0];
   const urlEntries = CANONICAL_ROUTES.map(
     (route) => `  <url>
@@ -121,8 +136,8 @@ ${urlEntries}
 });
 
 // Lead Submission API
-app.post('/api/leads', (req: Request, res: Response): any => {
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+app.post('/api/leads', (req, res) => {
+  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
 
   // 1. Rate limiting
   if (!checkRateLimit(clientIp)) {
@@ -153,7 +168,6 @@ app.post('/api/leads', (req: Request, res: Response): any => {
 
   // 2. Honeypot spam check
   if (_gotcha && String(_gotcha).trim().length > 0) {
-    // Silently succeed for bots
     return res.status(200).json({
       success: true,
       reference: 'PP-2026-SPAM-GUARD',
@@ -162,7 +176,7 @@ app.post('/api/leads', (req: Request, res: Response): any => {
   }
 
   // 3. Backend validation
-  const errors: Record<string, string> = {};
+  const errors = {};
 
   if (!name || typeof name !== 'string' || name.trim().length < 2) {
     errors.name = 'Full name is required (minimum 2 characters).';
@@ -177,7 +191,6 @@ app.post('/api/leads', (req: Request, res: Response): any => {
     errors.email = 'Email address must not exceed 150 characters.';
   }
 
-  // Clean phone: at least 7 digits, reasonable symbols
   const digitsOnly = phone ? String(phone).replace(/\D/g, '') : '';
   if (!phone || digitsOnly.length < 8 || digitsOnly.length > 15) {
     errors.phone = 'Please provide a valid contact phone number (at least 8-10 digits).';
@@ -222,7 +235,7 @@ app.post('/api/leads', (req: Request, res: Response): any => {
     budget: budget ? String(budget).trim() : 'Undisclosed',
     requirements: requirements.trim(),
     consent: true,
-    ip: clientIp.split(',')[0].trim(),
+    ip: String(clientIp).split(',')[0].trim(),
     sourcePage: source_page ? String(source_page).slice(0, 250) : '/',
     utm: {
       source: utm_source ? String(utm_source).slice(0, 80) : null,
@@ -246,13 +259,12 @@ app.post('/api/leads', (req: Request, res: Response): any => {
       }
     }
     currentLeads.unshift(newLead);
-    // Keep max 500 records in JSON file to prevent unbounded growth
     if (currentLeads.length > 500) {
       currentLeads = currentLeads.slice(0, 500);
     }
     fs.writeFileSync(leadsFilePath, JSON.stringify(currentLeads, null, 2), 'utf-8');
   } catch (storageErr) {
-    console.error('Error persisting lead to storage:', storageErr);
+    console.error('Error persisting lead to storage:', storageErr.message);
   }
 
   // 7. Formspree dispatch hook
@@ -277,9 +289,9 @@ app.post('/api/leads', (req: Request, res: Response): any => {
     }).catch((fErr) => console.warn('Formspree server dispatch note:', fErr.message));
   }
 
-  // 8. Safe operational logging & SMTP notification check
+  // 8. Safe operational logging & notification
   const recipientEmail = process.env.LEAD_NOTIFICATION_EMAIL || process.env.CONTACT_EMAIL || 'contact@pracharprasar.co';
-  console.log(`[LEAD RECEIVED] Ref: ${referenceId} | Name: ${newLead.name} | Service: ${newLead.service} | Target: ${recipientEmail} | Formspree: ${formspreeEndpoint}`);
+  console.log(`[LEAD RECEIVED] Ref: ${referenceId} | Name: ${newLead.name} | Service: ${newLead.service} | Target: ${recipientEmail}`);
 
   return res.status(201).json({
     success: true,
@@ -294,24 +306,52 @@ app.post('/api/leads', (req: Request, res: Response): any => {
   });
 });
 
-// Health check endpoint
-app.get('/api/health', (_req: Request, res: Response) => {
-  res.json({
-    status: 'ok',
-    app: 'Prachar Prasar Web Service',
-    time: new Date().toISOString(),
-    version: '1.0.0',
-    tagline: 'Prachar nhi toh Prasar nhi!',
-  });
+// Explicit 404 for unhandled API routes to prevent falling through to SPA HTML
+app.all('/api/*', (_req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
 });
 
-// Static assets from public directory
-app.use(express.static(path.resolve(__dirname, 'public'), { maxAge: '1d' }));
+// Serve static assets from public/ directory
+const publicPath = path.resolve(__dirname, 'public');
+if (fs.existsSync(publicPath)) {
+  app.use(express.static(publicPath, { maxAge: '1d' }));
+}
 
-// Set up Vite or Static Production Serving
+// Check if request is asking for a static asset file
+const isStaticAssetRequest = (reqPath) => {
+  return /\.[a-zA-Z0-9]+$/.test(reqPath);
+};
+
+// Production vs Development Server Setup
 async function startServer() {
-  if (!isProd) {
-    // Development mode: Mount Vite middleware
+  const distPath = path.resolve(__dirname, 'dist');
+  const indexHtmlPath = path.join(distPath, 'index.html');
+  const hasDist = fs.existsSync(indexHtmlPath);
+
+  if (isProd && !hasDist) {
+    console.error('================================================================');
+    console.error('[FATAL STARTUP ERROR] Production build directory dist/ is missing!');
+    console.error('Path checked:', indexHtmlPath);
+    console.error('Please run "npm run build" before launching in production.');
+    console.error('================================================================');
+    process.exit(1);
+  }
+
+  if (hasDist) {
+    // Serve production static assets from dist/
+    app.use(express.static(distPath, { maxAge: '7d' }));
+
+    // SPA fallback: return index.html for page navigation
+    app.get('*', (req, res) => {
+      // Guard: Do NOT return index.html for missing static files (js, css, images, etc.)
+      if (isStaticAssetRequest(req.path)) {
+        return res.status(404).type('text/plain').send(`Asset not found: ${req.path}`);
+      }
+      res.sendFile(indexHtmlPath);
+    });
+  } else {
+    // Development mode fallback: Mount Vite middleware dynamically
+    console.log('[DEV MODE] Mounting Vite middleware server...');
     const { createServer } = await import('vite');
     const vite = await createServer({
       server: {
@@ -322,31 +362,22 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
-  } else {
-    // Production mode: Serve dist/
-    const distPath = path.resolve(__dirname, 'dist');
-    if (fs.existsSync(distPath)) {
-      app.use(express.static(distPath, { maxAge: '7d' }));
-      app.get('*', (_req: Request, res: Response) => {
-        res.sendFile(path.resolve(distPath, 'index.html'));
-      });
-    } else {
-      // Fallback if not yet built
-      const { createServer } = await import('vite');
-      const vite = await createServer({
-        server: { middlewareMode: true, host: '0.0.0.0', port: PORT },
-        appType: 'spa',
-      });
-      app.use(vite.middlewares);
-    }
   }
 
+  // Centralized Error Handling Middleware (prevents leaking internal stack traces)
+  app.use((err, _req, res, _next) => {
+    console.error('Server error handler caught:', err.message);
+    if (res.headersSent) return;
+    res.status(500).json({ error: 'Internal server error' });
+  });
+
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Prachar Prasar server running on http://0.0.0.0:${PORT} [${process.env.NODE_ENV || 'development'}]`);
+    console.log(`Prachar Prasar production server listening on http://0.0.0.0:${PORT} (Node.js ${process.version})`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'production'} | Health endpoint: http://0.0.0.0:${PORT}/health`);
   });
 }
 
 startServer().catch((err) => {
-  console.error('Fatal server start error:', err);
+  console.error('Fatal server startup failure:', err);
   process.exit(1);
 });
